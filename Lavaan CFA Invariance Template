@@ -1,0 +1,375 @@
+############Confirmatory Factor Analysis and Measurement Invariance in Lavaan###############
+
+
+
+
+####GOOD RESOURCES:
+#Official lavaan website tutorial: http://lavaan.ugent.be/tutorial/index.html
+#Andy Field R tutorials: http://milton-the-cat.rocks/home/discovr.html
+#Course Mark found from Ben-Gurion University: https://github.com/mattansb/Structural-Equation-Modeling-foR-Psychologists
+
+
+
+
+
+
+###STEP 1 - Set up your project so you can save/find stuff
+
+
+
+
+
+
+###STEP 2 - install and load packages
+
+install.packages("lavaan")
+install.packages("semTools")
+install.packages("foreign")
+install.packages("ggplot2")
+install.packages("lavaanplot")
+
+
+
+
+#load packages, lavaan and semTools are the needed ones
+library("lavaan")
+library("semTools")
+library("foreign")
+library("lavaanPlot")
+library("ggplot2")
+
+
+
+
+
+
+###STEP 3 - tell R where to look for data and load it in
+
+#Set working directory (where to look for the data)
+getwd()
+setwd("/Daves files/R statistics projects/PERCI_USA/data")
+
+#loading data using the read.spss function from 'foreign' package
+percidata <- read.spss("Emotions_USA_508_data-set_MASTER_4.sav", to.data.frame = TRUE, use.value.labels = FALSE)
+
+############################CONFIRMATORY FACTOR ANALYSIS#################################
+
+###STEP 4 - map out the model you want to test
+
+#Specifying the model
+eightfactormodel <- "
+negexp =~ PERCI1 + PERCI5 + PERCI9 + PERCI13
+neginh =~ PERCI3 + PERCI7 + PERCI11 + PERCI15
+negact =~ PERCI2 + PERCI6 + PERCI10 + PERCI14
+negtol =~ PERCI4 + PERCI8 + PERCI12 + PERCI16
+posexp =~ PERCI18 + PERCI22 + PERCI26 + PERCI30
+posinh =~ PERCI17 + PERCI21 + PERCI25 + PERCI29
+posact =~ PERCI19 + PERCI23 + PERCI27 + PERCI31
+postol =~ PERCI20 + PERCI24 + PERCI28 + PERCI32"
+
+
+#lavaan commands (see http://lavaan.ugent.be/tutorial/syntax1.html)
+=~ latent variable definition (is measured by)
+~ regression (is regressed on)
+~~ covariance (is correlated with) - to specify no correlation, e.g., negexp ~~ 0*neginh
+~ 1 intercept
+
+
+
+
+
+
+
+###STEP 5 - tell lavaan to test it - "DO IT NOW LAVAAN OR I WILL COME AT YOU"
+
+#Fit the model, note can use cfa() or sem() commands, they do the same thing
+#Functions
+cfa()
+sem()
+
+#Estimation methods - for more info see http://lavaan.ugent.be/tutorial/est.html
+ML = maximum likelihood
+GLS = generalized least squares
+WLS = weighted least squares
+DWLS = diagonally weighted least squares
+ULS = unweighted least squares
+
+Robust ML variants = MLM, MLR, MLMVS, MLMV, MLF
+Robust WLS variants = WLSM, WLSMVS, WLSMV
+Robust ULS variants = ULSM, ULSMVS, ULSMV
+
+
+#Fit the model and save the results
+fit1 <- cfa(eightfactormodel, data = percidata, estimator = "MLM")
+fit1sem <- sem(eightfactormodel, data = percidata, estimator = "MLM")
+
+
+
+
+
+
+
+###STEP 6 - Look at the results/output of the analysis you just did
+
+#display summary output
+summary(fit1, fit.measures=TRUE, standardized=TRUE)
+summary(fit1sem, fit.measures=TRUE, standardized=TRUE)
+
+
+#Get modification indicies to see stuff wrong in your model
+summary(fit1, fit.measures=TRUE, standardized=TRUE, modindices=TRUE)
+#or
+modificationIndices(fit1, sort.=TRUE)
+
+#Get Omega reliability for factors using 'semTools' package
+#https://rdrr.io/cran/semTools/man/reliability.html
+reliability(fit1, omit.imps = c("no.conv", "no.se"))
+
+
+
+
+
+
+
+
+###STEP 7 - repeat for other factor models you are interested in
+
+#1 factor model
+onefactormodel <- "
+general =~ PERCI1 + PERCI5 + PERCI9 + PERCI13 + PERCI3 + PERCI7 + PERCI11 + PERCI15 + PERCI2 + PERCI6 + PERCI10 + PERCI14 + PERCI4 + PERCI8 + PERCI12 + PERCI16 + PERCI18 + PERCI22 + PERCI26 + PERCI30 + PERCI17 + PERCI21 + PERCI25 + PERCI29 + PERCI19 + PERCI23 + PERCI27 + PERCI31 + PERCI20 + PERCI24 + PERCI28 + PERCI32"
+
+fitonefactor <- cfa(onefactormodel, data = percidata, estimator = "MLM")
+
+summary(fitonefactor, fit.measures=TRUE, standardized=TRUE)
+
+
+#2 factor model
+twofactormodel <- "
+neg =~ PERCI1 + PERCI5 + PERCI9 + PERCI13 + PERCI3 + PERCI7 + PERCI11 + PERCI15 + PERCI2 + PERCI6 + PERCI10 + PERCI14 + PERCI4 + PERCI8 + PERCI12 + PERCI16
+pos =~ PERCI18 + PERCI22 + PERCI26 + PERCI30 + PERCI17 + PERCI21 + PERCI25 + PERCI29 + PERCI19 + PERCI23 + PERCI27 + PERCI31 + PERCI20 + PERCI24 + PERCI28 + PERCI32"
+
+fittwofactor <- cfa(twofactormodel, data = percidata, estimator = "MLM")
+
+summary(fittwofactor, fit.measures=TRUE, standardized=TRUE)
+
+
+#4 factor model
+fourfactormodel <- "
+genexp =~ PERCI1 + PERCI5 + PERCI9 + PERCI13 + PERCI18 + PERCI22 + PERCI26 + PERCI30
+geninh =~ PERCI3 + PERCI7 + PERCI11 + PERCI15 + PERCI17 + PERCI21 + PERCI25 + PERCI29
+genact =~ PERCI2 + PERCI6 + PERCI10 + PERCI14 + PERCI19 + PERCI23 + PERCI27 + PERCI31
+gentol =~ PERCI4 + PERCI8 + PERCI12 + PERCI16 + PERCI20 + PERCI24 + PERCI28 + PERCI32"
+
+fitfourfactor <- cfa(fourfactormodel, data = percidata, estimator = "MLM")
+
+summary(fitfourfactor, fit.measures=TRUE, standardized=TRUE, modindices=TRUE)
+
+
+#Second-order four factor model
+modelH <- "
+negexp =~ PERCI1 + PERCI5 + PERCI9 + PERCI13
+neginh =~ PERCI3 + PERCI7 + PERCI11 + PERCI15
+negact =~ PERCI2 + PERCI6 + PERCI10 + PERCI14
+negtol =~ PERCI4 + PERCI8 + PERCI12 + PERCI16
+posexp =~ PERCI18 + PERCI22 + PERCI26 + PERCI30
+posinh =~ PERCI17 + PERCI21 + PERCI25 + PERCI29
+posact =~ PERCI19 + PERCI23 + PERCI27 + PERCI31
+postol =~ PERCI20 + PERCI24 + PERCI28 + PERCI32
+generalneg =~ negexp + neginh + negact + negtol
+generalpos =~ posexp + posinh + posact + postol"
+
+#fit the model
+fitH <- cfa(modelH, data = percidata, estimator = "MLM")
+#display summary output
+summary(fitH, fit.measures=TRUE, standardized=TRUE, modindices=TRUE)
+#Omega reliability
+reliability(fitH, omit.imps = c("no.conv", "no.se"))
+
+
+
+
+
+
+##################################MEASUREMENT INVARIANCE#################################
+#see http://lavaan.ugent.be/tutorial/groups.html
+
+########SHORT CUT METHOD#########
+#Quick but less flexible - use the this function from the 'semTools' package
+measurementInvariance()
+
+
+###GENDER
+#Load data-set (if different to one you used before)
+percidataMIgen <- read.spss("Emotions_USA_508_data-set_MASTER_4_gender_MI.sav", to.data.frame = TRUE, use.value.labels = FALSE)
+#test the invariance - this function will show the output as well
+measurementInvariance(model = eightfactormodel, data = percidataMIgen, estimator = "MLM", group = "Gender")
+
+
+###AGE
+#Load data-set (if different to one you used before)
+percidataMIageedu <- read.spss("Emotions_USA_508_data-set_MASTER_4_age_edu_MI.sav", to.data.frame = TRUE, use.value.labels = FALSE)
+#test the invariance
+measurementInvariance(model = eightfactormodel, data = percidataMIageedu, estimator = "MLM", group = "AGECAT")
+
+
+###EDUCATION
+#Load data-set (if different to one you used before)
+percidataMIageedu <- read.spss("Emotions_USA_508_data-set_MASTER_4_age_edu_MI.sav", to.data.frame = TRUE, use.value.labels = FALSE)
+#test the invariance
+measurementInvariance(model = eightfactormodel, data = percidataMIageedu, estimator = "MLM", group = "EDUCAT")
+
+
+
+
+
+#########LONGER METHOD#########
+
+#use 'group.equal' argument to constrain parameters
+loadings - the factor loadings of the observed variables on the latent variables
+intercepts - the intercepts of the observed variables
+residuals - the residual variances of the observed variables
+means - the intercepts/means of the latent variables
+residual.covariances - the residual covariances of the observed variables
+lv.variances - the (residual) variances of the latent variables
+lv.covariances - the (residual) covariances of the latent varibles
+regressions - all regression coefficients in the model
+
+
+###GENDER
+#Configural
+#Tell lavaan to run it
+fitgender <- cfa(eightfactormodel, data = percidataMIgen, estimator = "MLM", group = "Gender")
+#Look at the output
+summary(fitgender, fit.measures=TRUE, standardized=TRUE)
+
+
+#Equal Factor loadings (metric invariance)
+fitgenderFL <- cfa(eightfactormodel, data = percidataMIgen, estimator = "MLM", group = "Gender", group.equal = c("loadings"))
+summary(fitgenderFL, fit.measures=TRUE, standardized=TRUE)
+
+
+#Equal intercepts (scalar invariance)
+fitgenderFLI <- cfa(eightfactormodel, data = percidataMIgen, estimator = "MLM", group = "Gender", group.equal = c("loadings", "intercepts"))
+summary(fitgenderFLI, fit.measures=TRUE, standardized=TRUE)
+
+#Equal residuals (strict invariance)
+fitgenderFLIR <- cfa(eightfactormodel, data = percidataMIgen, estimator = "MLM", group = "Gender", group.equal = c("loadings", "intercepts", "residuals"))
+summary(fitgenderFLIR, fit.measures=TRUE, standardized=TRUE)
+
+
+#partial invariance
+fitgenderFLIR <- cfa(eightfactormodel, data = percidataMIgen, estimator = "MLM", group = "Gender", group.equal = c("loadings", "intercepts", "residuals"), group.partial = c("negexp =~ PERCI5"))
+summary(fitgenderFLIR, fit.measures=TRUE, standardized=TRUE)
+
+
+
+
+###AGE
+#Configural
+fitage <- cfa(eightfactormodel, data = percidataMIageedu, estimator = "MLM", group = "AGECAT")
+summary(fitage, fit.measures=TRUE, standardized=TRUE)
+
+
+#Equal Factor loadings
+fitageFL <- cfa(eightfactormodel, data = percidataMIageedu, estimator = "MLM", group = "AGECAT", group.equal = c("loadings"))
+summary(fitageFL, fit.measures=TRUE, standardized=TRUE)
+
+
+#Equal intercepts
+fitageFLI <- cfa(eightfactormodel, data = percidataMIageedu, estimator = "MLM", group = "AGECAT", group.equal = c("loadings", "intercepts"))
+summary(fitageFLI, fit.measures=TRUE, standardized=TRUE)
+
+
+#Equal residuals
+fitageFLIR <- cfa(eightfactormodel, data = percidataMIageedu, estimator = "MLM", group = "AGECAT", group.equal = c("loadings", "intercepts", "residuals"))
+summary(fitageFLIR, fit.measures=TRUE, standardized=TRUE)
+
+
+
+
+
+
+###EDUCATION
+#Configural
+fitedu <- cfa(eightfactormodel, data = percidataMIageedu, estimator = "MLM", group = "EDUCAT")
+summary(fitedu, fit.measures=TRUE, standardized=TRUE)
+
+#Equal Factor loadings
+fiteduFL <- cfa(eightfactormodel, data = percidataMIageedu, estimator = "MLM", group = "EDUCAT", group.equal = c("loadings"))
+summary(fiteduFL, fit.measures=TRUE, standardized=TRUE)
+
+#Equal intercepts
+fiteduFLI <- cfa(eightfactormodel, data = percidataMIageedu, estimator = "MLM", group = "EDUCAT", group.equal = c("loadings", "intercepts"))
+summary(fiteduFLI, fit.measures=TRUE, standardized=TRUE)
+
+#Equal residuals
+fiteduFLIR <- cfa(eightfactormodel, data = percidataMIageedu, estimator = "MLM", group = "EDUCAT", group.equal = c("loadings", "intercepts", "residuals"))
+summary(fiteduFLIR, fit.measures=TRUE, standardized=TRUE, modindices=TRUE)
+
+#get modification indicies
+modificationIndices(fiteduFLIR, sort.=TRUE)
+
+
+
+
+
+
+
+
+
+
+
+#EXTRAS
+
+
+#Note: By default lavaan treats all factors as correlated
+#to do an orthogonal bifactor model see: http://lavaan.ugent.be/tutorial/syntax2.html
+modeluncorrelated <- "
+negexp =~ PERCI1 + PERCI5 + PERCI9 + PERCI13
+neginh =~ PERCI3 + PERCI7 + PERCI11 + PERCI15
+negact =~ PERCI2 + PERCI6 + PERCI10 + PERCI14
+negtol =~ PERCI4 + PERCI8 + PERCI12 + PERCI16
+posexp =~ PERCI18 + PERCI22 + PERCI26 + PERCI30
+posinh =~ PERCI17 + PERCI21 + PERCI25 + PERCI29
+posact =~ PERCI19 + PERCI23 + PERCI27 + PERCI31
+postol =~ PERCI20 + PERCI24 + PERCI28 + PERCI32
+negexp ~~ 0*neginh
+negact ~~ 0*negtol"
+
+#Or do it when fitting the model...
+fit1 <- cfa(model, data = percidata, estimator = "MLM", orthogonal=TRUE)
+
+#Fitting the model - ordinal
+#Note: To specfy items as ordinal data need to add 'ordered=c()' argument - then list all the ordinal items.
+#In lavaan if data is specified as ordinal can't use MLM estimation, only WLSMV or DWLS (see http://lavaan.ugent.be/tutorial/cat.html)
+fit1o <- cfa(model, data = percidata, estimator = "WLSMV", ordered=c("PERCI1", "PERCI2", "PERCI3", "PERCI4",
+                                                                     "PERCI5", "PERCI6", "PERCI7", "PERCI8", "PERCI9",
+                                                                     "PERCI10", "PERCI11", "PERCI12", "PERCI13", "PERCI14",
+                                                                     "PERCI15", "PERCI16", "PERCI17", "PERCI18", "PERCI19",
+                                                                     "PERCI20", "PERCI21", "PERCI22", "PERCI23", "PERCI24",
+                                                                     "PERCI25", "PERCI26", "PERCI27", "PERCI28", "PERCI29",
+                                                                     "PERCI30", "PERCI31", "PERCI32"))
+
+#display summary output
+summary(fit1o, fit.measures=TRUE, standardized=TRUE, modindices=TRUE)
+
+#Omega reliability (see https://rdrr.io/cran/semTools/man/reliability.html)
+reliability(fit1o, omit.imps = c("no.conv", "no.se"))
+
+
+
+
+#MLM estimation
+
+#Fit the model
+fit1 <- cfa(model, data = percidata, estimator = "MLM")
+
+#display summary output
+summary(fit1, fit.measures=TRUE, standardized=TRUE, modindices=TRUE)
+parameterEstimates(fit1, standardized = TRUE)
+semPaths(fit1, what="paths", whatLabels = "par")
+reliability(fit1, omit.imps = c("no.conv", "no.se"))
+
+#Omega
+#https://rdrr.io/cran/semTools/man/reliability.html
+reliability(fit1, omit.imps = c("no.conv", "no.se"))
